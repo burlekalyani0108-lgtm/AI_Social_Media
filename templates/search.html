@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search • Connect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
+            min-height: 100vh;
+        }
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
+            border-bottom: 1px solid #dbdbdb;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+        .nav-content {
+            width: 100%;
+            max-width: 975px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-family: 'Grand Hotel', cursive;
+            font-size: 30px;
+            color: #262626;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+        .nav-icons { display: flex; align-items: center; gap: 22px; }
+        .nav-icon-link { color: #262626; text-decoration: none; display: flex; align-items: center; }
+        .nav-icon-link svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+        .container {
+            max-width: 550px;
+            margin: 35px auto 60px auto;
+            padding: 0 16px;
+        }
+        .search-card {
+            background: #ffffff;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .search-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #efefef;
+        }
+        .search-input-box {
+            width: 100%;
+            height: 40px;
+            background: #efefef;
+            border: none;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-results-list {
+            padding: 10px 0;
+        }
+        .user-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            transition: background 0.15s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .user-row:hover { background: #fafafa; }
+        .user-row-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f09433, #dc2743);
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .username { font-weight: 600; font-size: 14px; color: #262626; }
+        .user-email { font-size: 12px; color: #8e8e8e; margin-top: 2px; }
+        .view-btn {
+            background: #efefef;
+            color: #262626;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .empty-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8e8e8e;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="{{ url_for('home') }}" class="logo">Connect</a>
+        <div class="nav-icons">
+            <a href="{{ url_for('home') }}" class="nav-icon-link" title="Home">
+                <svg viewBox="0 0 24 24"><path d="M9.005 16.545a2.997 2.997 0 0 1 2.997-2.997A2.997 2.997 0 0 1 15 16.545V22h7V11.543L12 2 2 11.543V22h7.005z"></path></svg>
+            </a>
+            <a href="{{ url_for('create_post') }}" class="nav-icon-link" title="Create Post">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" ry="5"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            </a>
+            <a href="{{ url_for('profile', user_id=current_user_id) }}" class="nav-icon-link" title="Profile">
+                <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="search-card">
+        <div class="search-header">
+            <form action="{{ url_for('search') }}" method="GET">
+                <input type="text" name="search" class="search-input-box" placeholder="Search people..." value="{{ query }}">
+            </form>
+        </div>
+
+        <div class="search-results-list">
+            {% if users %}
+                {% for u in users %}
+                <a href="{{ url_for('profile', user_id=u.id) }}" class="user-row">
+                    <div class="user-row-left">
+                        <div class="avatar">{{ u.username[0]|upper }}</div>
+                        <div>
+                            <div class="username">{{ u.username }}</div>
+                            <div class="user-email">{{ u.email }}</div>
+                        </div>
+                    </div>
+                    <button type="button" class="view-btn">View</button>
+                </a>
+                {% endfor %}
+            {% elif query %}
+                <div class="empty-results">
+                    No users found matching "{{ query }}"
+                </div>
+            {% else %}
+                <div class="empty-results">
+                    Type a username to discover creators on Connect.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

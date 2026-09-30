@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Home - Connect</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        /* ================= NAVBAR ================= */
+
+        .navbar {
+            height: 60px;
+
+            background: white;
+
+            border-bottom: 1px solid #ddd;
+
+            display: flex;
+
+            align-items: center;
+
+            padding: 0 25px;
+
+            gap: 25px;
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 21px;
+
+            font-weight: bold;
+
+            color: red;
+
+            text-decoration: none;
+        }
+
+        .search {
+            flex: 1;
+
+            max-width: 500px;
+
+            margin: auto;
+        }
+
+        .search input {
+            width: 100%;
+
+            padding: 10px 16px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 22px;
+
+            outline: none;
+
+            font-size: 14px;
+
+            background: #f7f7f7;
+        }
+
+        .search input:focus {
+            border-color: #aaa;
+
+            background: white;
+        }
+
+        .nav-links {
+            display: flex;
+
+            align-items: center;
+
+            gap: 18px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+
+            color: #4d168c;
+
+            font-size: 14px;
+        }
+
+        .nav-links a:hover {
+            color: #000;
+        }
+
+        .logout {
+            color: red !important;
+        }
+
+
+        /* ================= MAIN ================= */
+
+        .container {
+            width: 620px;
+
+            max-width: 94%;
+
+            margin: 30px auto;
+        }
+
+
+        /* ================= SEARCH RESULTS ================= */
+
+        .search-results {
+            background: white;
+
+            padding: 18px 20px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 12px;
+
+            margin-bottom: 20px;
+        }
+
+        .search-results h3 {
+            margin-top: 0;
+
+            margin-bottom: 10px;
+        }
+
+        .search-user {
+            padding: 12px 0;
+
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-user:last-child {
+            border-bottom: none;
+        }
+
+        .search-user a {
+            text-decoration: none;
+
+            color: #222;
+
+            font-weight: bold;
+        }
+
+        .search-user a:hover {
+            color: #1877f2;
+        }
+
+
+        /* ================= PROFILE SUMMARY ================= */
+
+        .profile-summary {
+            background: white;
+
+            border: 1px solid #ddd;
+
+            border-radius: 12px;
+
+            padding: 22px;
+
+            margin-bottom: 28px;
+        }
+
+        .profile-top {
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+        }
+
+        .profile-avatar {
+            width: 55px;
+
+            height: 55px;
+
+            border-radius: 50%;
+
+            background: linear-gradient(
+                135deg,
+                #ff512f,
+                #ff8a00
+            );
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 25px;
+
+            font-weight: bold;
+        }
+
+        .profile-name {
+            font-size: 20px;
+
+            font-weight: bold;
+        }
+
+        .welcome {
+            color: #777;
+
+            font-size: 13px;
+
+            margin-top: 4px;
+        }
+
+        .stats {
+            display: flex;
+
+            gap: 45px;
+
+            margin-top: 20px;
+
+            padding-top: 18px;
+
+            border-top: 1px solid #eee;
+        }
+
+        .stats a {
+            text-decoration: none;
+
+            color: #222;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat strong {
+            display: block;
+
+            font-size: 18px;
+        }
+
+        .stat span {
+            color: #777;
+
+            font-size: 13px;
+        }
+
+        .create {
+            display: inline-block;
+
+            background: red;
+
+            color: white;
+
+            padding: 10px 18px;
+
+            border-radius: 7px;
+
+            text-decoration: none;
+
+            margin-top: 20px;
+
+            font-size: 14px;
+
+            font-weight: bold;
+        }
+
+        .create:hover {
+            background: #d90000;
+        }
+
+
+        /* ================= POSTS TITLE ================= */
+
+        .feed-header {
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 15px;
+        }
+
+        .feed-header h2 {
+            margin: 0;
+
+            font-size: 21px;
+        }
+
+        .feed-label {
+            color: #777;
+
+            font-size: 13px;
+        }
+
+
+        /* ================= POST ================= */
+
+        .post {
+            background: white;
+
+            border: 1px solid #ddd;
+
+            border-radius: 12px;
+
+            margin-bottom: 18px;
+
+            overflow: hidden;
+        }
+
+
+        /* POST HEADER */
+
+        .post-header {
+            display: flex;
+
+            align-items: center;
+
+            padding: 15px 17px;
+
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .post-avatar {
+            width: 42px;
+
+            height: 42px;
+
+            border-radius: 50%;
+
+            background: linear-gradient(
+                135deg,
+                #ff512f,
+                #ff8a00
+            );
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 19px;
+
+            font-weight: bold;
+
+            margin-right: 12px;
+        }
+
+        .post-user-info {
+            display: flex;
+
+            flex-direction: column;
+        }
+
+        .post-user {
+            font-weight: bold;
+
+            font-size: 15px;
+        }
+
+        .post-user a {
+            text-decoration: none;
+
+            color: #222;
+        }
+
+        .post-user a:hover {
+            color: #1877f2;
+        }
+
+        .post-time {
+            color: #888;
+
+            font-size: 12px;
+
+            margin-top: 3px;
+        }
+
+
+        /* POST CONTENT */
+
+        .post-content {
+            padding: 20px 18px;
+
+            font-size: 16px;
+
+            line-height: 1.6;
+
+            white-space: pre-wrap;
+
+            word-wrap: break-word;
+        }
+
+
+        /* POST FOOTER */
+
+        .post-footer {
+            display: flex;
+
+            align-items: center;
+
+            gap: 25px;
+
+            padding: 12px 18px;
+
+            border-top: 1px solid #eee;
+        }
+
+        .post-action {
+            border: none;
+
+            background: transparent;
+
+            font-size: 14px;
+
+            color: #555;
+
+            cursor: pointer;
+
+            padding: 5px;
+        }
+
+        .post-action:hover {
+            color: #1877f2;
+        }
+
+
+        /* ================= EMPTY POSTS ================= */
+
+        .empty-post {
+            background: white;
+
+            border: 1px solid #ddd;
+
+            border-radius: 12px;
+
+            padding: 50px 20px;
+
+            text-align: center;
+
+            color: #777;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+
+            margin-bottom: 10px;
+        }
+
+        .empty-post p {
+            margin: 5px 0;
+        }
+
+        .empty-post a {
+            display: inline-block;
+
+            margin-top: 15px;
+
+            background: red;
+
+            color: white;
+
+            padding: 9px 16px;
+
+            border-radius: 7px;
+
+            text-decoration: none;
+
+            font-size: 14px;
+        }
+
+
+        /* ================= MOBILE ================= */
+
+        @media (max-width: 700px) {
+
+            .navbar {
+                padding: 0 12px;
+
+                gap: 10px;
+            }
+
+            .logo {
+                font-size: 18px;
+            }
+
+            .nav-links {
+                gap: 8px;
+            }
+
+            .nav-links a {
+                font-size: 12px;
+            }
+
+            .search {
+                max-width: none;
+            }
+
+            .container {
+                width: 100%;
+
+                max-width: 96%;
+
+                margin-top: 20px;
+            }
+
+            .stats {
+                gap: 30px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     NAVBAR
+===================================================== -->
+
+<nav class="navbar">
+
+
+    <a
+        href="{{ url_for('home') }}"
+        class="logo"
+    >
+        Connect
+    </a>
+
+
+    <form
+        class="search"
+        action="{{ url_for('search') }}"
+        method="GET"
+    >
+
+        <input
+            type="text"
+            name="search"
+            placeholder="Search users..."
+            value="{{ search_keyword|default('') }}"
+        >
+
+    </form>
+
+
+    <div class="nav-links">
+
+        <a href="{{ url_for('home') }}">
+            🏠
+        </a>
+
+
+        <a
+            href="{{ url_for('profile', user_id=user.id) }}"
+        >
+            👤 {{ user.username }}
+        </a>
+
+
+        <a href="{{ url_for('create_post') }}">
+            Create Post
+        </a>
+
+
+        <a
+            class="logout"
+            href="{{ url_for('logout') }}"
+        >
+            Logout
+        </a>
+
+    </div>
+
+</nav>
+
+
+
+<!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+
+<div class="container">
+
+
+    <!-- ================= SEARCH RESULTS ================= -->
+
+    {% if users is defined %}
+
+        <div class="search-results">
+
+            <h3>
+                Search Results
+            </h3>
+
+
+            {% if users %}
+
+                {% for searched_user in users %}
+
+                    <div class="search-user">
+
+                        <a
+                            href="{{ url_for('profile', user_id=searched_user.id) }}"
+                        >
+                            👤 {{ searched_user.username }}
+                        </a>
+
+                    </div>
+
+                {% endfor %}
+
+
+            {% else %}
+
+                <p>
+                    No users found.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+    {% endif %}
+
+
+
+    <!-- ================= PROFILE SUMMARY ================= -->
+
+    <div class="profile-summary">
+
+
+        <div class="profile-top">
+
+
+            <div class="profile-avatar">
+
+                {{ user.username[0]|upper }}
+
+            </div>
+
+
+            <div>
+
+                <div class="profile-name">
+
+                    {{ user.username }}
+
+                </div>
+
+
+                <div class="welcome">
+
+                    Welcome back to Connect 👋
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="stats">
+
+
+            <a
+                href="{{ url_for('followers', user_id=user.id) }}"
+            >
+
+                <div class="stat">
+
+                    <strong>
+                        {{ followers_count }}
+                    </strong>
+
+                    <span>
+                        Followers
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <a
+                href="{{ url_for('following', user_id=user.id) }}"
+            >
+
+                <div class="stat">
+
+                    <strong>
+                        {{ following_count }}
+                    </strong>
+
+                    <span>
+                        Following
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+
+        <a
+            class="create"
+            href="{{ url_for('create_post') }}"
+        >
+            + Create Post
+        </a>
+
+
+    </div>
+
+
+
+    <!-- ================= FEED HEADER ================= -->
+
+    <div class="feed-header">
+
+        <h2>
+            Home Feed
+        </h2>
+
+        <span class="feed-label">
+            Latest posts
+        </span>
+
+    </div>
+
+
+
+    <!-- ================= POSTS ================= -->
+
+    {% if posts %}
+
+
+        {% for post in posts %}
+
+
+            <div class="post">
+
+
+                <!-- POST HEADER -->
+
+                <div class="post-header">
+
+
+                    <div class="post-avatar">
+
+                        {% if post.username %}
+
+                            {{ post.username[0]|upper }}
+
+                        {% else %}
+
+                            U
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="post-user-info">
+
+
+                        <div class="post-user">
+
+                            <a
+                                href="{{ url_for('profile', user_id=post.user_id) }}"
+                            >
+
+                                {{ post.username }}
+
+                            </a>
+
+                        </div>
+
+
+                        <div class="post-time">
+
+                            {{ post.created_at }}
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- POST CONTENT -->
+
+                <div class="post-content">
+
+                    {{ post.content }}
+
+                </div>
+
+
+
+                <!-- POST ACTIONS -->
+
+                <div class="post-footer">
+
+                    <button
+                        type="button"
+                        class="post-action"
+                    >
+                        ❤️ Like
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="post-action"
+                    >
+                        💬 Comment
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="post-action"
+                    >
+                        ↗ Share
+                    </button>
+
+                </div>
+
+
+            </div>
+
+
+        {% endfor %}
+
+
+    {% else %}
+
+
+        <div class="empty-post">
+
+            <div class="empty-icon">
+                📷
+            </div>
+
+            <p>
+                <strong>No posts yet.</strong>
+            </p>
+
+            <p>
+                Be the first person to share something!
+            </p>
+
+
+            <a
+                href="{{ url_for('create_post') }}"
+            >
+                Create Your First Post
+            </a>
+
+        </div>
+
+
+    {% endif %}
+
+
+</div>
+
+
+</body>
+
+</html>

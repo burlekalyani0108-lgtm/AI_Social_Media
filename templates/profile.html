@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }} • Connect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
+            min-height: 100vh;
+        }
+
+        /* TOP NAVIGATION */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
+            border-bottom: 1px solid #dbdbdb;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+        .nav-content {
+            width: 100%;
+            max-width: 975px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-family: 'Grand Hotel', cursive;
+            font-size: 30px;
+            color: #262626;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+        .nav-icons {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+        .nav-icon-link {
+            color: #262626;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        .nav-icon-link svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .nav-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f09433, #dc2743);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 0 1px #dbdbdb;
+        }
+
+        /* PROFILE CONTAINER */
+        .profile-container {
+            max-width: 935px;
+            margin: 35px auto 60px auto;
+            padding: 0 20px;
+        }
+
+        /* PROFILE HEADER */
+        .profile-header {
+            display: flex;
+            margin-bottom: 44px;
+            gap: 40px;
+        }
+        .profile-avatar-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 30px;
+        }
+        .profile-avatar-ring {
+            width: 156px;
+            height: 156px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            padding: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-avatar-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: white;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-avatar-big {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #cbd5e1;
+            color: #334155;
+            font-size: 54px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-info {
+            flex-grow: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .profile-top-line {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .profile-username {
+            font-size: 24px;
+            font-weight: 400;
+            color: #262626;
+        }
+        .action-button {
+            padding: 7px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #dbdbdb;
+            background: #ffffff;
+            color: #262626;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+        .action-button:hover { background: #fafafa; }
+        .follow-primary-btn {
+            background: #0095f6;
+            color: #ffffff;
+            border: none;
+        }
+        .follow-primary-btn:hover { background: #1877f2; }
+        .following-btn {
+            background: #efefef;
+            color: #262626;
+            border: none;
+        }
+
+        .profile-stats-row {
+            display: flex;
+            gap: 40px;
+            font-size: 16px;
+            color: #262626;
+        }
+        .profile-stat a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .profile-stat strong { font-weight: 600; }
+
+        .profile-bio {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .bio-name { font-weight: 600; color: #262626; }
+        .bio-text { color: #262626; margin-top: 2px; white-space: pre-line; }
+
+        /* TABS */
+        .profile-tabs {
+            border-top: 1px solid #dbdbdb;
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+        }
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 52px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #8e8e8e;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-top: 1px solid transparent;
+            margin-top: -1px;
+            text-decoration: none;
+        }
+        .tab-item.active {
+            color: #262626;
+            border-top: 1px solid #262626;
+        }
+        .tab-item svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+        /* 3-COLUMN SQUARE POST GRID */
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            margin-top: 10px;
+        }
+        @media (max-width: 735px) {
+            .posts-grid { gap: 3px; }
+            .profile-header { flex-direction: column; align-items: center; gap: 20px; }
+            .profile-avatar-container { margin-right: 0; }
+            .profile-info { align-items: center; text-align: center; }
+            .profile-stats-row { justify-content: center; }
+        }
+
+        .grid-tile {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #000000;
+            overflow: hidden;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .grid-tile img, .grid-tile video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .grid-audio-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            gap: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* MEDIA TYPE BADGE (TOP RIGHT) */
+        .tile-type-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 16px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            pointer-events: none;
+        }
+
+        /* HOVER OVERLAY */
+        .tile-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 26px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .grid-tile:hover .tile-overlay { opacity: 1; }
+        .tile-stat { display: flex; align-items: center; gap: 6px; }
+
+        .no-posts-box {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 20px;
+            color: #8e8e8e;
+        }
+        .no-posts-icon {
+            font-size: 50px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP NAVIGATION -->
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="{{ url_for('home') }}" class="logo">Connect</a>
+        <div class="nav-icons">
+            <a href="{{ url_for('home') }}" class="nav-icon-link" title="Home">
+                <svg viewBox="0 0 24 24"><path d="M9.005 16.545a2.997 2.997 0 0 1 2.997-2.997A2.997 2.997 0 0 1 15 16.545V22h7V11.543L12 2 2 11.543V22h7.005z"></path></svg>
+            </a>
+            <a href="{{ url_for('create_post') }}" class="nav-icon-link" title="Create Post">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" ry="5"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            </a>
+            <a href="{{ url_for('search') }}" class="nav-icon-link" title="Search">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+            </a>
+            <a href="{{ url_for('profile', user_id=session.get('user_id')) }}" class="nav-icon-link" title="Profile">
+                <div class="nav-avatar">{{ session.get('username', 'U')[0]|upper }}</div>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- PROFILE CONTAINER -->
+<div class="profile-container">
+
+    <!-- PROFILE HEADER (AUTHENTIC INSTAGRAM LAYOUT) -->
+    <header class="profile-header">
+        <div class="profile-avatar-container">
+            <div class="profile-avatar-ring">
+                <div class="profile-avatar-inner">
+                    <div class="profile-avatar-big">{{ user.username[0]|upper }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-info">
+            <div class="profile-top-line">
+                <h1 class="profile-username">{{ user.username }}</h1>
+
+                {% if is_own_profile %}
+                    <a href="{{ url_for('create_post') }}" class="action-button">+ Create Post</a>
+                    <a href="{{ url_for('logout') }}" class="action-button">Log Out</a>
+                {% else %}
+                    <form method="POST" action="{{ url_for('follow_user', user_id=user.id) }}" style="display:inline;">
+                        {% if is_following %}
+                            <button type="submit" class="action-button following-btn">Following</button>
+                        {% else %}
+                            <button type="submit" class="action-button follow-primary-btn">Follow</button>
+                        {% endif %}
+                    </form>
+                {% endif %}
+            </div>
+
+            <!-- PROFILE STATS (POSTS | FOLLOWERS | FOLLOWING) -->
+            <div class="profile-stats-row">
+                <div class="profile-stat">
+                    <strong>{{ post_count }}</strong> posts
+                </div>
+                <div class="profile-stat">
+                    <a href="{{ url_for('followers', user_id=user.id) }}">
+                        <strong>{{ followers_count }}</strong> followers
+                    </a>
+                </div>
+                <div class="profile-stat">
+                    <a href="{{ url_for('following', user_id=user.id) }}">
+                        <strong>{{ following_count }}</strong> following
+                    </a>
+                </div>
+            </div>
+
+            <!-- BIO / DETAILS -->
+            <div class="profile-bio">
+                <div class="bio-name">{{ user.username }}</div>
+                <div class="bio-text">
+                    {% if user.bio %}{{ user.bio }}{% else %}Welcome to my Connect profile! Sharing photos, audio, and videos.{% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- TABS -->
+    <div class="profile-tabs">
+        <div class="tab-item active" onclick="switchProfileTab('all', this)">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            POSTS
+        </div>
+        <div class="tab-item" onclick="switchProfileTab('video', this)">
+            <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+            REELS / VIDEOS
+        </div>
+        <div class="tab-item" onclick="switchProfileTab('audio', this)">
+            <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            AUDIO
+        </div>
+    </div>
+
+    <!-- 3-COLUMN SQUARE POST GRID -->
+    <div class="posts-grid" id="profileGrid">
+        {% if posts %}
+            {% for post in posts %}
+            <div class="grid-tile post-tile" data-type="{{ post.post_type or 'image' }}" onclick="window.location.href='{{ url_for('home') }}#post-card-{{ post.id }}'">
+                <!-- MEDIA -->
+                {% if post.post_type == 'video' and (post.media_file or post.image) %}
+                    <video preload="metadata" muted playsinline>
+                        <source src="{{ url_for('static', filename='uploads/' + (post.media_file or post.image)) }}">
+                    </video>
+                    <span class="tile-type-badge">🎥</span>
+                {% elif post.post_type == 'audio' and (post.media_file or post.image) %}
+                    <div class="grid-audio-placeholder">
+                        <div style="font-size: 32px;">🎵</div>
+                        <span style="font-size: 12px; font-weight: 600;">Voice Note</span>
+                    </div>
+                    <span class="tile-type-badge">🎵</span>
+                {% elif post.image %}
+                    <img src="{{ url_for('static', filename='uploads/' + post.image) }}" alt="Post thumbnail">
+                {% else %}
+                    <div class="grid-audio-placeholder">
+                        <p style="font-size: 13px;">{{ post.caption[:50] }}</p>
+                    </div>
+                {% endif %}
+
+                <!-- HOVER OVERLAY (LIKES & COMMENTS) -->
+                <div class="tile-overlay">
+                    <div class="tile-stat">
+                        <span>❤️</span>
+                        <span>{{ post.likes or 0 }}</span>
+                    </div>
+                    <div class="tile-stat">
+                        <span>💬</span>
+                        <span>{{ post.comments_count or 0 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-posts-box">
+                <div class="no-posts-icon">📷</div>
+                <h3 style="font-size: 20px; font-weight: 700; color: #262626; margin-bottom: 8px;">No Posts Yet</h3>
+                <p style="font-size: 14px;">When {{ user.username }} posts, photos and videos will appear here.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+function switchProfileTab(type, el) {
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+
+    const tiles = document.querySelectorAll('.post-tile');
+    tiles.forEach(tile => {
+        if (type === 'all' || tile.dataset.type === type) {
+            tile.style.display = 'block';
+        } else {
+            tile.style.display = 'none';
+        }
+    });
+}
+</script>
+
+</body>
+</html>

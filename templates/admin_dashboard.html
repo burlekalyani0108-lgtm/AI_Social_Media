@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AI Content Moderation & User Control</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f4f6f9;
+            color: #2c3e50;
+        }
+        .navbar {
+            background: #1e293b;
+            color: white;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .nav-brand { font-size: 19px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .nav-links a { color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 500; margin-left: 20px; transition: color 0.2s; }
+        .nav-links a:hover { color: #fff; }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .page-title {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .page-title h1 { font-size: 24px; font-weight: 700; color: #0f172a; }
+        .page-title span { font-size: 13px; color: #64748b; }
+
+        /* KPI Cards Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #0f172a; }
+        .stat-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; display: inline-block; width: fit-content; }
+        .badge-safe { background: #dcfce7; color: #166534; }
+        .badge-warn { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #e0f2fe; color: #075985; }
+
+        /* Content Sections */
+        .panel {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .panel-header h2 { font-size: 17px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+
+        /* Tables */
+        .table-responsive { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+        th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            padding: 12px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        tr:hover td { background: #fafcff; }
+
+        .user-cell { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #1e293b; }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #3b82f6; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700;
+        }
+
+        .strike-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+        .strike-0 { background: #f1f5f9; color: #475569; }
+        .strike-1 { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+        .strike-2 { background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; }
+        .strike-3 { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn-sm {
+            padding: 5px 10px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-sm:hover { background: #f1f5f9; }
+        .btn-warn { color: #d97706; border-color: #fde68a; }
+        .btn-warn:hover { background: #fef3c7; }
+        .btn-tempban { color: #ea580c; border-color: #fed7aa; }
+        .btn-tempban:hover { background: #ffedd5; }
+        .btn-ban { color: #dc2626; border-color: #fecaca; }
+        .btn-ban:hover { background: #fee2e2; }
+        .btn-reset { color: #16a34a; border-color: #bbf7d0; }
+        .btn-reset:hover { background: #dcfce7; }
+
+        .log-snippet {
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #475569;
+            font-family: monospace;
+            background: #f8fafc;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-brand">
+        🛡️ Connect AI Moderation & Admin Dashboard
+    </div>
+    <div class="nav-links">
+        <a href="{{ url_for('home') }}">← Back to Social Feed</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-title">
+        <div>
+            <h1>Platform Overview & Moderation Controls</h1>
+            <span>Real-time monitoring: Whisper Speech-to-Text & DistilBERT Content Classification</span>
+        </div>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total Users</span>
+            <span class="stat-value">{{ stats.total_users }}</span>
+            <span class="stat-badge badge-info">Platform Registered</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Active Users</span>
+            <span class="stat-value">{{ stats.active_users }}</span>
+            <span class="stat-badge badge-safe">In Good Standing</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Users With Strikes</span>
+            <span class="stat-value">{{ stats.users_with_strikes }}</span>
+            <span class="stat-badge badge-warn">1+ Violations</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Temporary Bans</span>
+            <span class="stat-value">{{ stats.temp_banned }}</span>
+            <span class="stat-badge badge-warn">24h Suspended</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Permanent Bans</span>
+            <span class="stat-value">{{ stats.perm_banned }}</span>
+            <span class="stat-badge badge-danger">Locked Out</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Blocked Violations</span>
+            <span class="stat-value">{{ stats.flagged_violations }}</span>
+            <span class="stat-badge badge-danger">Harmful Blocked</span>
+        </div>
+    </div>
+
+    <!-- SECTION 1: USER MANAGEMENT & STRIKE CONTROL -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>👥 User Management & Strike Controls</h2>
+            <span style="font-size: 13px; color: #64748b;">Strike Rules: 1 = Warning | 2 = Temp Ban (24h) | 3 = Perm Ban</span>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Current Strikes</th>
+                        <th>Account Status</th>
+                        <th>Ban Until</th>
+                        <th>Admin Status</th>
+                        <th>Moderation Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr id="user-row-{{ u.id }}">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">{{ u.username[0]|upper }}</div>
+                                <div>
+                                    <div>{{ u.username }}</div>
+                                    <small style="color: #94a3b8;">ID: #{{ u.id }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            <span class="strike-pill strike-{{ u.strikes if u.strikes < 3 else 3 }}">
+                                {{ u.strikes }} / 3 Strikes
+                            </span>
+                        </td>
+                        <td>
+                            {% if u.account_status == 'active' %}
+                                <span class="stat-badge badge-safe">Active</span>
+                            {% elif u.account_status == 'warning' %}
+                                <span class="stat-badge badge-warn">⚠️ Warning</span>
+                            {% elif u.account_status == 'temporary_ban' %}
+                                <span class="stat-badge badge-warn">⏸️ Temp Ban</span>
+                            {% elif u.account_status == 'banned' %}
+                                <span class="stat-badge badge-danger">🛑 Perm Ban</span>
+                            {% else %}
+                                {{ u.account_status }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.ban_until %}
+                                <span style="font-size: 12px; color: #dc2626;">{{ u.ban_until }}</span>
+                            {% else %}
+                                <span style="color: #94a3b8;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.is_admin %}
+                                <span style="color: #0284c7; font-weight: 700;">👑 Admin</span>
+                            {% else %}
+                                <span style="color: #94a3b8;">User</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn-sm btn-warn" onclick="executeUserAction({{ u.id }}, 'warn')" title="Issue Strike 1 Warning">⚠️ Warn</button>
+                                <button class="btn-sm btn-tempban" onclick="executeUserAction({{ u.id }}, 'temp_ban')" title="Apply 24h Temporary Ban">⏸️ Temp Ban</button>
+                                <button class="btn-sm btn-ban" onclick="executeUserAction({{ u.id }}, 'perm_ban')" title="Apply Permanent Ban">🛑 Ban</button>
+                                <button class="btn-sm btn-reset" onclick="executeUserAction({{ u.id }}, 'unban')" title="Reset strikes to 0 & Activate">🔄 Reset / Unban</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SECTION 2: AI MODERATION AUDIT LOGS -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>📜 AI Moderation Audit Logs (Speech-to-Text & DistilBERT)</h2>
+            <span style="font-size: 13px; color: #64748b;">Showing last 50 automated moderation records</span>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Content Type</th>
+                        <th>Speech / Text Transcript (Whisper)</th>
+                        <th>DistilBERT Classification</th>
+                        <th>Action Taken</th>
+                        <th>Strike</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if logs %}
+                        {% for log in logs %}
+                        <tr>
+                            <td style="white-space: nowrap; color: #64748b; font-size: 12px;">{{ log.created_at }}</td>
+                            <td><strong>{{ log.username }}</strong></td>
+                            <td>
+                                <span style="text-transform: capitalize; font-weight: 500;">
+                                    {% if 'audio' in log.content_type %}🎵 Audio
+                                    {% elif 'video' in log.content_type %}🎥 Video
+                                    {% elif 'image' in log.content_type %}📷 Image
+                                    {% else %}💬 Text{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="log-snippet" title="{{ log.extracted_text or 'No transcript' }}">
+                                    {{ log.extracted_text or '(None)' }}
+                                </div>
+                            </td>
+                            <td>
+                                {% if log.classification == 'harmful' %}
+                                    <span class="stat-badge badge-danger">🛑 Harmful</span>
+                                    <small style="display: block; color: #dc2626; font-size: 11px;">{{ log.harm_category }}</small>
+                                {% else %}
+                                    <span class="stat-badge badge-safe">✅ Safe</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.action_taken == 'blocked' or 'BAN' in log.action_taken or 'WARNING' in log.action_taken %}
+                                    <span style="color: #dc2626; font-weight: 700;">Blocked ({{ log.action_taken }})</span>
+                                {% else %}
+                                    <span style="color: #16a34a; font-weight: 600;">Published</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.strike_applied %}
+                                    <span class="strike-pill strike-2">+1 Strike</span>
+                                {% else %}
+                                    <span style="color: #94a3b8;">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 30px;">
+                                No moderation logs recorded yet.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function executeUserAction(userId, action) {
+    if (!confirm(`Are you sure you want to apply '${action}' to User #${userId}?`)) return;
+
+    fetch(`/admin/user/${userId}/action`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: action })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch(err => alert("Request failed: " + err));
+}
+</script>
+
+</body>
+</html>

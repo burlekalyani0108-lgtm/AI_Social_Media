@@ -1,0 +1,493 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    color: #222;
+}
+
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar {
+    height: 58px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 20px;
+
+    position: sticky;
+    top: 0;
+
+    z-index: 100;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff3040;
+}
+
+.search-box {
+    flex: 1;
+
+    display: flex;
+    justify-content: center;
+}
+
+.search-box input {
+    width: 240px;
+
+    padding: 8px 15px;
+
+    border: 1px solid #ddd;
+    border-radius: 20px;
+
+    outline: none;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    font-size: 14px;
+}
+
+.nav-right a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+.logged-user {
+    font-weight: 500;
+}
+
+
+/* =========================
+   MAIN
+========================= */
+
+.main-container {
+    width: 100%;
+    max-width: 620px;
+
+    margin: 20px auto;
+
+    padding: 0 10px;
+}
+
+
+/* =========================
+   STORY
+========================= */
+
+.story-section {
+    background: white;
+
+    border: 1px solid #ddd;
+    border-radius: 10px;
+
+    padding: 15px;
+
+    margin-bottom: 15px;
+}
+
+.story-circle {
+    width: 55px;
+    height: 55px;
+
+    border-radius: 50%;
+
+    background: linear-gradient(
+        135deg,
+        #ff3040,
+        #ff9800
+    );
+
+    color: white;
+
+    font-size: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.story-name {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+
+/* =========================
+   POST
+========================= */
+
+.post-card {
+    background: white;
+
+    border: 1px solid #ddd;
+
+    border-radius: 10px;
+
+    margin-bottom: 20px;
+
+    overflow: hidden;
+}
+
+
+/* =========================
+   POST HEADER
+========================= */
+
+.post-header {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 12px;
+}
+
+.profile-circle {
+    width: 38px;
+    height: 38px;
+
+    border-radius: 50%;
+
+    background: linear-gradient(
+        135deg,
+        #ff3040,
+        #ff9800
+    );
+
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: bold;
+}
+
+.post-header small {
+    display: block;
+
+    color: #777;
+
+    font-size: 11px;
+
+    margin-top: 3px;
+}
+
+
+/* =========================
+   CAPTION
+========================= */
+
+.post-caption {
+    padding: 0 12px 12px;
+
+    font-size: 15px;
+}
+
+
+/* =========================
+   IMAGE
+========================= */
+
+.post-image {
+    width: 100%;
+
+    display: block;
+
+    max-height: 600px;
+
+    object-fit: cover;
+}
+
+
+/* =========================
+   ACTIONS
+========================= */
+
+.post-actions {
+    padding: 8px 12px 0;
+}
+
+.like-button {
+    background: none;
+
+    border: none;
+
+    font-size: 28px;
+
+    cursor: pointer;
+
+    padding: 0;
+}
+
+.like-button.liked {
+    color: red;
+}
+
+
+/* =========================
+   LIKE COUNT
+========================= */
+
+.like-count {
+    padding: 5px 12px 10px;
+
+    font-size: 14px;
+
+    font-weight: 500;
+}
+
+
+/* =========================
+   COMMENTS
+========================= */
+
+.comments {
+    padding: 0 12px;
+}
+
+.comment {
+    margin-bottom: 7px;
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   COMMENT FORM
+========================= */
+
+.comment-form {
+    display: flex;
+
+    border-top: 1px solid #eee;
+
+    padding: 10px;
+}
+
+.comment-form input {
+    flex: 1;
+
+    border: none;
+
+    outline: none;
+
+    padding: 8px;
+}
+
+.comment-form button {
+    border: none;
+
+    background: none;
+
+    color: #007bff;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   LOGIN / REGISTER
+========================= */
+
+.auth-container {
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #f5f5f5;
+}
+
+.auth-box {
+    width: 320px;
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 10px;
+
+    box-shadow: 0 5px 25px rgba(0,0,0,0.10);
+}
+
+.auth-box h1 {
+    text-align: center;
+
+    color: #ff3040;
+
+    margin-bottom: 30px;
+}
+
+.auth-box label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-weight: bold;
+
+    font-size: 14px;
+}
+
+.auth-box input {
+    width: 100%;
+
+    padding: 11px;
+
+    margin-bottom: 18px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 6px;
+
+    outline: none;
+}
+
+.auth-box button {
+    width: 100%;
+
+    padding: 11px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #ff3040;
+
+    color: white;
+
+    font-size: 15px;
+
+    cursor: pointer;
+}
+
+.register-text {
+    text-align: center;
+
+    margin-top: 20px;
+}
+
+.register-text a {
+    color: #ff3040;
+
+    font-weight: bold;
+
+    text-decoration: none;
+}
+
+.message {
+    text-align: center;
+
+    color: #ff3040;
+
+    margin-top: 15px;
+}
+
+
+/* =========================
+   CREATE POST
+========================= */
+
+.create-container {
+    display: flex;
+
+    justify-content: center;
+
+    padding-top: 40px;
+}
+
+.create-box {
+    width: 500px;
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 10px;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.create-box h2 {
+    margin-top: 0;
+}
+
+.create-box label {
+    display: block;
+
+    font-weight: bold;
+
+    margin: 15px 0 7px;
+}
+
+.create-box textarea {
+    width: 100%;
+
+    resize: vertical;
+
+    padding: 10px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 6px;
+}
+
+.create-box input[type="file"] {
+    width: 100%;
+
+    margin-bottom: 20px;
+}
+
+.create-box button {
+    width: 100%;
+
+    padding: 12px;
+
+    background: #ff3040;
+
+    color: white;
+
+    border: none;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   NO POSTS
+========================= */
+
+.no-posts {
+    background: white;
+
+    border: 1px solid #ddd;
+
+    border-radius: 10px;
+
+    text-align: center;
+
+    padding: 40px;
+}

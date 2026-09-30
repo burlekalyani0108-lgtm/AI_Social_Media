@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Connect</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        nav {
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+
+            display: flex;
+            align-items: center;
+
+            padding: 0 25px;
+
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ff0000;
+        }
+
+        .search {
+            flex: 1;
+        }
+
+        .search input {
+            width: 100%;
+            padding: 10px 15px;
+
+            border: 1px solid #ddd;
+            border-radius: 25px;
+
+            outline: none;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #4b0082;
+            font-size: 14px;
+        }
+
+        .container {
+            width: 600px;
+            max-width: 95%;
+            margin: 30px auto;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        button,
+        .button {
+            background: #ff0000;
+            color: white;
+            border: none;
+
+            padding: 9px 18px;
+
+            border-radius: 5px;
+
+            cursor: pointer;
+
+            text-decoration: none;
+        }
+
+        .button.secondary {
+            background: #555;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat a {
+            text-decoration: none;
+            color: #222;
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+
+            padding: 12px;
+
+            border: 1px solid #ddd;
+            border-radius: 8px;
+
+            resize: vertical;
+        }
+
+        input {
+            padding: 10px;
+        }
+
+        .flash {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            background: #eee;
+        }
+
+        .user-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            padding: 15px 0;
+
+            border-bottom: 1px solid #eee;
+        }
+
+        .username {
+            font-weight: bold;
+            text-decoration: none;
+            color: #222;
+        }
+
+        .post-content {
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .date {
+            color: #888;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<nav>
+
+    <div class="logo">
+        Connect
+    </div>
+
+    <div class="search">
+
+        <form action="{{ url_for('search') }}"
+              method="GET">
+
+            <input
+                type="text"
+                name="q"
+                placeholder="Search..."
+                value="{{ request.args.get('q', '') }}"
+            >
+
+        </form>
+
+    </div>
+
+    {% if session.get('user_id') %}
+
+        <a href="{{ url_for('home') }}">
+            🏠 Home
+        </a>
+
+        <a href="{{ url_for('profile', user_id=session['user_id']) }}">
+            👤 {{ session.get('username') }}
+        </a>
+
+        <a href="{{ url_for('create_post') }}">
+            Create Post
+        </a>
+
+        <a href="{{ url_for('logout') }}">
+            Logout
+        </a>
+
+    {% endif %}
+
+</nav>
+
+
+<div class="container">
+
+    {% with messages = get_flashed_messages() %}
+
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div class="flash">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    {% block content %}
+
+    {% endblock %}
+
+</div>
+
+</body>
+
+</html>

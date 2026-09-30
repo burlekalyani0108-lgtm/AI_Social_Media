@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Post • Instagram</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
+            min-height: 100vh;
+        }
+
+        /* TOP NAVIGATION */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
+            border-bottom: 1px solid #dbdbdb;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+        .nav-content {
+            width: 100%;
+            max-width: 975px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-family: 'Grand Hotel', cursive;
+            font-size: 30px;
+            color: #262626;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+        .nav-icons { display: flex; align-items: center; gap: 22px; }
+        .nav-icon-link { color: #262626; text-decoration: none; display: flex; align-items: center; }
+        .nav-icon-link svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+        /* MODAL CONTAINER */
+        .modal-wrapper {
+            max-width: 820px;
+            margin: 40px auto 60px auto;
+            background: #ffffff;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+        .modal-header {
+            height: 48px;
+            border-bottom: 1px solid #dbdbdb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+        .header-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0095f6;
+            text-decoration: none;
+        }
+        .header-btn.cancel { color: #262626; font-weight: 400; }
+        .modal-title { font-size: 16px; font-weight: 600; color: #262626; }
+
+        /* TABS (POST TYPE SELECTOR) */
+        .type-tabs {
+            display: flex;
+            border-bottom: 1px solid #efefef;
+            background: #fdfdfd;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 600;
+            color: #8e8e8e;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .tab-btn.active {
+            color: #262626;
+            border-bottom: 2px solid #262626;
+            background: #ffffff;
+        }
+
+        /* TWO-COLUMN LAYOUT */
+        .modal-body {
+            display: flex;
+            min-height: 480px;
+        }
+        @media (max-width: 768px) {
+            .modal-body { flex-direction: column; }
+        }
+
+        /* LEFT COLUMN (MEDIA DROPZONE & PREVIEW) */
+        .media-column {
+            flex: 1.2;
+            border-right: 1px solid #efefef;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+        }
+        .dropzone-box {
+            text-align: center;
+            cursor: pointer;
+            width: 100%;
+        }
+        .dropzone-icon svg { width: 70px; height: 70px; stroke: #262626; fill: none; stroke-width: 1.2; }
+        .dropzone-text { font-size: 18px; color: #262626; margin: 16px 0 20px 0; font-weight: 300; }
+        .select-file-btn {
+            background-color: #0095f6;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .select-file-btn:hover { background-color: #1877f2; }
+        input[type="file"] { display: none; }
+
+        .media-preview-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            max-height: 450px;
+            background: #000;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .media-preview-container img, .media-preview-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* LIVE VOICE RECORDER */
+        .mic-recorder-card {
+            display: none;
+            width: 100%;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .record-pulse-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ed4956;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(237, 73, 86, 0.3);
+            transition: transform 0.2s;
+        }
+        .record-pulse-btn.recording {
+            animation: pulse-ring 1.2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(237, 73, 86, 0.6); }
+            70% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(237, 73, 86, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(237, 73, 86, 0); }
+        }
+        .timer-text { font-size: 13px; font-weight: 600; color: #ed4956; margin-top: 10px; display: none; }
+
+        /* RIGHT COLUMN (META & CAPTION) */
+        .meta-column {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #ffffff;
+        }
+        .meta-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f09433, #dc2743);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .user-name { font-size: 14px; font-weight: 600; color: #262626; }
+
+        .caption-textarea {
+            width: 100%;
+            height: 140px;
+            border: none;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            color: #262626;
+            line-height: 1.5;
+        }
+        .caption-textarea::placeholder { color: #8e8e8e; }
+
+        .moderation-pill {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #166534;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .submit-post-btn {
+            width: 100%;
+            height: 40px;
+            background-color: #0095f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.15s;
+        }
+        .submit-post-btn:hover { background-color: #1877f2; }
+
+        /* LOADING OVERLAY */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-box {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            width: 340px;
+        }
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0095f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loading-msg { font-size: 14px; font-weight: 600; color: #262626; }
+        .loading-sub { font-size: 12px; color: #8e8e8e; margin-top: 4px; }
+
+        /* STRIKE MODAL */
+        .strike-modal {
+            display: {% if harmful %}flex{% else %}none{% endif %};
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .strike-card {
+            background: white;
+            border-radius: 12px;
+            width: 440px;
+            max-width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+        .strike-header {
+            background: #ed4956;
+            color: white;
+            padding: 24px;
+        }
+        .strike-body {
+            padding: 24px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #262626;
+        }
+        .strike-btn {
+            display: block;
+            margin: 16px auto 0 auto;
+            background: #262626;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="{{ url_for('home') }}" class="logo">Connect</a>
+        <div class="nav-icons">
+            <a href="{{ url_for('home') }}" class="nav-icon-link" title="Back to Feed">
+                <svg viewBox="0 0 24 24"><path d="M9.005 16.545a2.997 2.997 0 0 1 2.997-2.997A2.997 2.997 0 0 1 15 16.545V22h7V11.543L12 2 2 11.543V22h7.005z"></path></svg>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="modal-wrapper">
+    <form id="createPostForm" method="POST" enctype="multipart/form-data" onsubmit="handlePostSubmit(event)">
+        <input type="hidden" name="post_type" id="post_type" value="image">
+
+        <div class="modal-header">
+            <a href="{{ url_for('home') }}" class="header-btn cancel">Cancel</a>
+            <span class="modal-title">Create new post</span>
+            <button type="submit" class="header-btn">Share</button>
+        </div>
+
+        <div class="type-tabs">
+            <button type="button" class="tab-btn active" onclick="switchMediaType('image', this)">📷 Photo</button>
+            <button type="button" class="tab-btn" onclick="switchMediaType('audio', this)">🎵 Audio Note</button>
+            <button type="button" class="tab-btn" onclick="switchMediaType('video', this)">🎥 Video Reel</button>
+        </div>
+
+        <div class="modal-body">
+            <!-- LEFT COLUMN: DROPZONE & PREVIEW -->
+            <div class="media-column">
+                <div class="dropzone-box" id="dropzoneBox" onclick="triggerFilePicker()">
+                    <div class="dropzone-icon">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                    <p class="dropzone-text" id="dropzonePrompt">Select photos or media here</p>
+                    <button type="button" class="select-file-btn">Select from computer</button>
+                </div>
+
+                <input type="file" id="mediaInput" name="media" onchange="handleMediaSelect(this)">
+
+                <!-- PREVIEWS -->
+                <div class="media-preview-container" id="mediaPreview"></div>
+
+                <!-- LIVE VOICE RECORDER -->
+                <div class="mic-recorder-card" id="micRecorderCard">
+                    <p style="font-size: 14px; font-weight: 600; margin-bottom: 14px;">Live Voice Recording</p>
+                    <button type="button" id="recordBtn" class="record-pulse-btn" onclick="toggleMicRecord()">🎤</button>
+                    <div id="recordTimer" class="timer-text">00:00 - Recording...</div>
+                    <audio id="audioPlayback" controls style="width: 100%; margin-top: 14px; display: none;"></audio>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: CAPTION & USER -->
+            <div class="meta-column">
+                <div>
+                    <div class="meta-user">
+                        <div class="user-avatar">{{ session.get('username', 'U')[0]|upper }}</div>
+                        <span class="user-name">{{ session.get('username', 'User') }}</span>
+                    </div>
+
+                    <textarea name="caption" class="caption-textarea" placeholder="Write a caption..."></textarea>
+                </div>
+
+                <div>
+                    <div class="moderation-pill">
+                        <span>🛡️</span>
+                        <span>AI Moderation Active: Whisper STT & DistilBERT verify all uploads for safety.</span>
+                    </div>
+
+                    {% if error and not harmful %}
+                    <p style="font-size: 13px; color: #dc2626; margin-top: 10px;">⚠️ {{ error }}</p>
+                    {% endif %}
+
+                    <button type="submit" class="submit-post-btn">Share</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <div id="loadingMsg" class="loading-msg">Processing media...</div>
+        <div id="loadingSub" class="loading-sub">Running AI moderation checks</div>
+    </div>
+</div>
+
+<!-- HARMFUL STRIKE MODAL -->
+<div id="strikeModal" class="strike-modal">
+    <div class="strike-card">
+        <div class="strike-header">
+            <h3 style="font-size: 18px;">🛑 Content Blocked</h3>
+        </div>
+        <div class="strike-body">
+            <p><strong>{{ strike_info.message if strike_info else 'Harmful content detected by AI.' }}</strong></p>
+            {% if extracted_text %}
+            <p style="font-size: 12px; color: #64748b; margin-top: 10px; font-style: italic;">
+                Whisper Transcript: "{{ extracted_text }}"
+            </p>
+            {% endif %}
+            <a href="{{ url_for('home') }}" class="strike-btn">Return to Feed</a>
+        </div>
+    </div>
+</div>
+
+<script>
+let activeMediaType = 'image';
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordedBlob = null;
+let timerInterval = null;
+
+function switchMediaType(type, btn) {
+    activeMediaType = type;
+    document.getElementById('post_type').value = type;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const input = document.getElementById('mediaInput');
+    const prompt = document.getElementById('dropzonePrompt');
+    const micCard = document.getElementById('micRecorderCard');
+    const dropzone = document.getElementById('dropzoneBox');
+
+    if (type === 'image') {
+        input.accept = "image/*";
+        prompt.innerText = "Select photos here";
+        micCard.style.display = "none";
+        dropzone.style.display = "block";
+    } else if (type === 'video') {
+        input.accept = "video/*";
+        prompt.innerText = "Select videos here";
+        micCard.style.display = "none";
+        dropzone.style.display = "block";
+    } else if (type === 'audio') {
+        input.accept = "audio/*";
+        prompt.innerText = "Select audio files here";
+        micCard.style.display = "block";
+    }
+}
+
+function triggerFilePicker() {
+    document.getElementById('mediaInput').click();
+}
+
+function handleMediaSelect(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const previewContainer = document.getElementById('mediaPreview');
+    const dropzone = document.getElementById('dropzoneBox');
+
+    previewContainer.innerHTML = '';
+    const url = URL.createObjectURL(file);
+
+    if (file.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = url;
+        previewContainer.appendChild(img);
+    } else if (file.type.startsWith('video/')) {
+        const vid = document.createElement('video');
+        vid.src = url;
+        vid.controls = true;
+        previewContainer.appendChild(vid);
+    } else if (file.type.startsWith('audio/')) {
+        const aud = document.createElement('audio');
+        aud.src = url;
+        aud.controls = true;
+        previewContainer.appendChild(aud);
+    }
+
+    dropzone.style.display = 'none';
+    previewContainer.style.display = 'block';
+}
+
+async function toggleMicRecord() {
+    const btn = document.getElementById('recordBtn');
+    const timer = document.getElementById('recordTimer');
+
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        btn.classList.remove('recording');
+        btn.innerHTML = '🎤';
+        clearInterval(timerInterval);
+        timer.style.display = 'none';
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        recordedChunks = [];
+
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            recordedBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+            const audioEl = document.getElementById('audioPlayback');
+            audioEl.src = URL.createObjectURL(recordedBlob);
+            audioEl.style.display = 'block';
+            stream.getTracks().forEach(t => t.stop());
+        };
+
+        mediaRecorder.start();
+        btn.classList.add('recording');
+        btn.innerHTML = '⏹️';
+        timer.style.display = 'block';
+        let seconds = 0;
+        timerInterval = setInterval(() => {
+            seconds++;
+            const m = String(Math.floor(seconds/60)).padStart(2, '0');
+            const s = String(seconds % 60).padStart(2, '0');
+            timer.innerText = `${m}:${s} - Recording...`;
+        }, 1000);
+    } catch (err) {
+        alert("Microphone permission denied: " + err);
+    }
+}
+
+function handlePostSubmit(e) {
+    const overlay = document.getElementById('loadingOverlay');
+    const msg = document.getElementById('loadingMsg');
+    const sub = document.getElementById('loadingSub');
+
+    overlay.style.display = 'flex';
+
+    if (activeMediaType === 'video') {
+        msg.innerText = "Extracting video audio...";
+        sub.innerText = "Whisper AI is ready to transcribe speech";
+        setTimeout(() => { msg.innerText = "Transcribing with Whisper..."; }, 2000);
+        setTimeout(() => { msg.innerText = "Verifying safety with DistilBERT..."; }, 4500);
+    } else if (activeMediaType === 'audio') {
+        msg.innerText = "Transcribing speech with Whisper...";
+        sub.innerText = "Converting speech to text";
+        setTimeout(() => { msg.innerText = "Verifying safety with DistilBERT..."; }, 2500);
+    } else {
+        msg.innerText = "Evaluating caption with DistilBERT...";
+        sub.innerText = "Checking content safety guidelines";
+    }
+
+    // Attach recorded blob if present and no file chosen
+    if (activeMediaType === 'audio' && recordedBlob && !document.getElementById('mediaInput').files.length) {
+        e.preventDefault();
+        const form = document.getElementById('createPostForm');
+        const formData = new FormData(form);
+        formData.append('recorded_audio', recordedBlob, 'voicenote.webm');
+
+        fetch("{{ url_for('create_post') }}", {
+            method: "POST",
+            body: formData,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(r => r.json())
+        .then(d => {
+            overlay.style.display = 'none';
+            if (d.success) {
+                window.location.href = "{{ url_for('home') }}";
+            } else if (d.harmful) {
+                document.getElementById('strikeModal').style.display = 'flex';
+            } else {
+                alert(d.message || "Failed to create post.");
+            }
+        })
+        .catch(err => {
+            overlay.style.display = 'none';
+            alert("Upload error: " + err);
+        });
+    }
+}
+</script>
+
+</body>
+</html>

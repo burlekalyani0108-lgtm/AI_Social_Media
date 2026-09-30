@@ -1,0 +1,1889 @@
+import os
+import uuid
+
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    jsonify,
+)
+
+import mysql.connector
+from mysql.connector import Error
+
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+
+
+# =========================================================
+# FLASK
+# =========================================================
+
+app = Flask(__name__)
+
+app.secret_key = "connect_social_media_secret_key_2026"
+
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+
+app.config["UPLOAD_FOLDER"] = os.path.join(
+    app.root_path,
+    "static",
+    "uploads"
+)
+
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+
+ALLOWED_EXTENSIONS = {
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp"
+}
+
+
+# =========================================================
+# MYSQL CONFIGURATION
+# =========================================================
+
+DB_HOST = "localhost"
+DB_PORT = 3307
+DB_USER = "root"
+
+# IMPORTANT:
+# Put your actual MySQL password here.
+# Example:
+# DB_PASSWORD = "root"
+#
+# If your MySQL root account has NO password, keep "".
+DB_PASSWORD = "Kalyani@2005"
+
+DB_NAME = "ai_social_media"
+
+
+# =========================================================
+# DATABASE CONNECTION
+# =========================================================
+
+def get_db_connection():
+
+    try:
+
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME
+        )
+
+        if connection.is_connected():
+            return connection
+
+    except Error as e:
+
+        print("MYSQL CONNECTION ERROR:", e)
+
+    return None
+
+
+# =========================================================
+# DATABASE INITIALIZATION
+# =========================================================
+
+def initialize_database():
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        print("DATABASE CONNECTION FAILED")
+        print("Check:")
+        print("1. MySQL is running")
+        print("2. MySQL port is 3307")
+        print("3. DB_PASSWORD is correct")
+
+        return
+
+    cursor = connection.cursor()
+
+    try:
+
+        # -------------------------------------------------
+        # USERS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) NOT NULL UNIQUE,
+                email VARCHAR(150) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                profile_pic VARCHAR(500) NULL,
+                bio TEXT NULL,
+                account_status VARCHAR(20)
+                    NOT NULL DEFAULT 'active',
+                created_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # -------------------------------------------------
+        # POSTS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS posts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                image VARCHAR(500) NULL,
+                caption TEXT NULL,
+                likes INT NOT NULL DEFAULT 0,
+                created_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE
+            )
+        """)
+
+        # -------------------------------------------------
+        # LIKES
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS likes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                post_id INT NOT NULL,
+                created_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP,
+
+                UNIQUE KEY unique_like (
+                    user_id,
+                    post_id
+                ),
+
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (post_id)
+                    REFERENCES posts(id)
+                    ON DELETE CASCADE
+            )
+        """)
+
+        # -------------------------------------------------
+        # COMMENTS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS comments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                post_id INT NOT NULL,
+                comment TEXT NOT NULL,
+                created_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP,
+
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (post_id)
+                    REFERENCES posts(id)
+                    ON DELETE CASCADE
+            )
+        """)
+
+        # -------------------------------------------------
+        # FOLLOWS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS follows (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                follower_id INT NOT NULL,
+                following_id INT NOT NULL,
+                created_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP,
+
+                UNIQUE KEY unique_follow (
+                    follower_id,
+                    following_id
+                ),
+
+                FOREIGN KEY (follower_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (following_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE
+            )
+        """)
+
+        connection.commit()
+
+        print("----------------------------------------")
+        print("DATABASE READY")
+        print("Database :", DB_NAME)
+        print("MySQL    :", DB_HOST)
+        print("Port     :", DB_PORT)
+        print("----------------------------------------")
+
+    except Error as e:
+
+        connection.rollback()
+
+        print("DATABASE INITIALIZATION ERROR:", e)
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# HELPERS
+# =========================================================
+
+def allowed_file(filename):
+
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower()
+        in ALLOWED_EXTENSIONS
+    )
+
+
+def is_ajax_request():
+
+    return (
+        request.headers.get("X-Requested-With")
+        == "XMLHttpRequest"
+    )
+
+
+def password_is_valid(
+    stored_password,
+    entered_password
+):
+
+    if not stored_password:
+        return False
+
+    try:
+
+        if stored_password.startswith(
+            ("scrypt:", "pbkdf2:")
+        ):
+
+            return check_password_hash(
+                stored_password,
+                entered_password
+            )
+
+    except Exception:
+
+        return False
+
+    # Support old plain-text passwords
+    return stored_password == entered_password
+
+
+# =========================================================
+# INDEX
+# =========================================================
+
+@app.route("/")
+def index():
+
+    if "user_id" in session:
+
+        return redirect(url_for("home"))
+
+    return redirect(url_for("login"))
+
+
+# =========================================================
+# LOGIN
+# =========================================================
+
+@app.route(
+    "/login",
+    methods=["GET", "POST"]
+)
+def login():
+
+    if request.method == "GET":
+
+        return render_template(
+            "login.html"
+        )
+
+    username_or_email = request.form.get(
+        "username",
+        ""
+    ).strip()
+
+    password = request.form.get(
+        "password",
+        ""
+    )
+
+    if not username_or_email or not password:
+
+        return render_template(
+            "login.html",
+            error="Username/email and password are required."
+        )
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return render_template(
+            "login.html",
+            error="Database connection failed."
+        )
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                username,
+                email,
+                password,
+                profile_pic,
+                bio,
+                account_status
+            FROM users
+            WHERE LOWER(username) = LOWER(%s)
+               OR LOWER(email) = LOWER(%s)
+            LIMIT 1
+            """,
+            (
+                username_or_email,
+                username_or_email
+            )
+        )
+
+        user = cursor.fetchone()
+
+        if not user:
+
+            return render_template(
+                "login.html",
+                error="User not found."
+            )
+
+        if user.get("account_status") != "active":
+
+            return render_template(
+                "login.html",
+                error="Your account is not active."
+            )
+
+        if not password_is_valid(
+            user["password"],
+            password
+        ):
+
+            return render_template(
+                "login.html",
+                error="Incorrect password."
+            )
+
+        # Convert old plain-text password
+        # into a secure hash.
+        if not user["password"].startswith(
+            ("scrypt:", "pbkdf2:")
+        ):
+
+            new_password = generate_password_hash(
+                password,
+                method="scrypt"
+            )
+
+            cursor.execute(
+                """
+                UPDATE users
+                SET password = %s
+                WHERE id = %s
+                """,
+                (
+                    new_password,
+                    user["id"]
+                )
+            )
+
+            connection.commit()
+
+        # -------------------------------------------------
+        # LOGIN SESSION
+        # -------------------------------------------------
+
+        session.clear()
+
+        session["user_id"] = user["id"]
+        session["username"] = user["username"]
+        session["email"] = user["email"]
+
+        print("--------------------------------")
+        print("LOGIN SUCCESS")
+        print("USER ID :", user["id"])
+        print("USERNAME:", user["username"])
+        print("--------------------------------")
+
+        return redirect(
+            url_for("home")
+        )
+
+    except Error as e:
+
+        print("LOGIN ERROR:", e)
+
+        return render_template(
+            "login.html",
+            error=f"Login error: {e}"
+        )
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# REGISTER
+# =========================================================
+
+@app.route(
+    "/register",
+    methods=["GET", "POST"]
+)
+def register():
+
+    if request.method == "GET":
+
+        return render_template(
+            "register.html"
+        )
+
+    username = request.form.get(
+        "username",
+        ""
+    ).strip()
+
+    email = request.form.get(
+        "email",
+        ""
+    ).strip().lower()
+
+    password = request.form.get(
+        "password",
+        ""
+    )
+
+    confirm_password = request.form.get(
+        "confirm_password",
+        ""
+    )
+
+    if not username or not email or not password:
+
+        return render_template(
+            "register.html",
+            error="All fields are required."
+        )
+
+    if password != confirm_password:
+
+        return render_template(
+            "register.html",
+            error="Passwords do not match."
+        )
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return render_template(
+            "register.html",
+            error="Database connection failed."
+        )
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT id
+            FROM users
+            WHERE LOWER(username) = LOWER(%s)
+               OR LOWER(email) = LOWER(%s)
+            LIMIT 1
+            """,
+            (
+                username,
+                email
+            )
+        )
+
+        if cursor.fetchone():
+
+            return render_template(
+                "register.html",
+                error="Username or email already exists."
+            )
+
+        password_hash = generate_password_hash(
+            password,
+            method="scrypt"
+        )
+
+        cursor.execute(
+            """
+            INSERT INTO users
+            (
+                username,
+                email,
+                password,
+                account_status
+            )
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                'active'
+            )
+            """,
+            (
+                username,
+                email,
+                password_hash
+            )
+        )
+
+        connection.commit()
+
+        return redirect(
+            url_for("login")
+        )
+
+    except Error as e:
+
+        connection.rollback()
+
+        print("REGISTER ERROR:", e)
+
+        return render_template(
+            "register.html",
+            error=f"Registration failed: {e}"
+        )
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# HOME
+# =========================================================
+
+@app.route("/home")
+def home():
+
+    if "user_id" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    current_user_id = session["user_id"]
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return "Database connection failed."
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        # -------------------------------------------------
+        # CURRENT USER
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                username,
+                email,
+                profile_pic,
+                bio
+            FROM users
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (current_user_id,)
+        )
+
+        current_user = cursor.fetchone()
+
+        if not current_user:
+
+            session.clear()
+
+            return redirect(
+                url_for("login")
+            )
+
+        # -------------------------------------------------
+        # POSTS
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                p.id,
+                p.user_id,
+                p.image,
+                p.caption,
+                p.created_at,
+
+                u.username,
+                u.profile_pic,
+
+                (
+                    SELECT COUNT(*)
+                    FROM likes l
+                    WHERE l.post_id = p.id
+                ) AS likes,
+
+                EXISTS (
+                    SELECT 1
+                    FROM likes l2
+                    WHERE l2.post_id = p.id
+                    AND l2.user_id = %s
+                ) AS user_liked,
+
+                EXISTS (
+                    SELECT 1
+                    FROM follows f
+                    WHERE f.follower_id = %s
+                    AND f.following_id = p.user_id
+                ) AS is_following
+
+            FROM posts p
+
+            INNER JOIN users u
+                ON p.user_id = u.id
+
+            WHERE p.user_id != %s
+
+            ORDER BY p.created_at DESC
+            """,
+            (
+                current_user_id,
+                current_user_id,
+                current_user_id
+            )
+        )
+
+        posts = cursor.fetchall()
+
+        # -------------------------------------------------
+        # COMMENTS
+        # -------------------------------------------------
+
+        for post in posts:
+
+            cursor.execute(
+                """
+                SELECT
+                    c.id,
+                    c.comment,
+                    c.created_at,
+                    u.username
+                FROM comments c
+                INNER JOIN users u
+                    ON c.user_id = u.id
+                WHERE c.post_id = %s
+                ORDER BY c.created_at ASC
+                """,
+                (post["id"],)
+            )
+
+            post["comments"] = cursor.fetchall()
+
+        return render_template(
+            "index.html",
+            current_user=current_user,
+            current_user_id=current_user_id,
+            posts=posts
+        )
+
+    except Error as e:
+
+        print("HOME ERROR:", e)
+
+        return f"Home error: {e}"
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# CREATE POST
+# =========================================================
+
+@app.route(
+    "/create-post",
+    methods=["GET", "POST"]
+)
+def create_post():
+
+    if "user_id" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    if request.method == "GET":
+
+        return render_template(
+            "create_post.html"
+        )
+
+    caption = request.form.get(
+        "caption",
+        ""
+    ).strip()
+
+    image = request.files.get(
+        "image"
+    )
+
+    image_filename = None
+
+    if image and image.filename:
+
+        if not allowed_file(
+            image.filename
+        ):
+
+            return render_template(
+                "create_post.html",
+                error="Only image files are allowed."
+            )
+
+        original_name = secure_filename(
+            image.filename
+        )
+
+        extension = os.path.splitext(
+            original_name
+        )[1].lower()
+
+        image_filename = (
+            uuid.uuid4().hex
+            + extension
+        )
+
+        image_path = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            image_filename
+        )
+
+        image.save(image_path)
+
+    if not caption and not image_filename:
+
+        return render_template(
+            "create_post.html",
+            error="Please add an image or caption."
+        )
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return render_template(
+            "create_post.html",
+            error="Database connection failed."
+        )
+
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            INSERT INTO posts
+            (
+                user_id,
+                image,
+                caption,
+                likes
+            )
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                0
+            )
+            """,
+            (
+                session["user_id"],
+                image_filename,
+                caption
+            )
+        )
+
+        connection.commit()
+
+        return redirect(
+            url_for("home")
+        )
+
+    except Error as e:
+
+        connection.rollback()
+
+        print("CREATE POST ERROR:", e)
+
+        return render_template(
+            "create_post.html",
+            error=f"Unable to create post: {e}"
+        )
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# LIKE / UNLIKE
+# =========================================================
+
+@app.route(
+    "/like/<int:post_id>",
+    methods=["POST"]
+)
+def like_post(post_id):
+
+    if "user_id" not in session:
+
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    current_user_id = session["user_id"]
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return jsonify({
+            "success": False,
+            "message": "Database connection failed."
+        }), 500
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        # Check post
+        cursor.execute(
+            """
+            SELECT id
+            FROM posts
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (post_id,)
+        )
+
+        if not cursor.fetchone():
+
+            return jsonify({
+                "success": False,
+                "message": "Post not found."
+            }), 404
+
+        # Check existing like
+        cursor.execute(
+            """
+            SELECT id
+            FROM likes
+            WHERE user_id = %s
+            AND post_id = %s
+            LIMIT 1
+            """,
+            (
+                current_user_id,
+                post_id
+            )
+        )
+
+        existing_like = cursor.fetchone()
+
+        if existing_like:
+
+            cursor.execute(
+                """
+                DELETE FROM likes
+                WHERE user_id = %s
+                AND post_id = %s
+                """,
+                (
+                    current_user_id,
+                    post_id
+                )
+            )
+
+            liked = False
+
+        else:
+
+            cursor.execute(
+                """
+                INSERT INTO likes
+                (
+                    user_id,
+                    post_id
+                )
+                VALUES
+                (
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    current_user_id,
+                    post_id
+                )
+            )
+
+            liked = True
+
+        # Count likes
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM likes
+            WHERE post_id = %s
+            """,
+            (post_id,)
+        )
+
+        total_likes = cursor.fetchone()["total"]
+
+        # Keep old likes column synchronized
+        cursor.execute(
+            """
+            UPDATE posts
+            SET likes = %s
+            WHERE id = %s
+            """,
+            (
+                total_likes,
+                post_id
+            )
+        )
+
+        connection.commit()
+
+        return jsonify({
+            "success": True,
+            "liked": liked,
+            "likes": total_likes
+        })
+
+    except Error as e:
+
+        connection.rollback()
+
+        print("LIKE ERROR:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to update like."
+        }), 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# COMMENT
+# =========================================================
+
+@app.route(
+    "/comment/<int:post_id>",
+    methods=["POST"]
+)
+def add_comment(post_id):
+
+    if "user_id" not in session:
+
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    data = request.get_json(
+        silent=True
+    )
+
+    if data:
+
+        comment_text = (
+            data.get("comment")
+            or data.get("text")
+            or ""
+        ).strip()
+
+    else:
+
+        comment_text = request.form.get(
+            "comment",
+            ""
+        ).strip()
+
+    if not comment_text:
+
+        return jsonify({
+            "success": False,
+            "message": "Comment cannot be empty."
+        }), 400
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return jsonify({
+            "success": False,
+            "message": "Database connection failed."
+        }), 500
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT id
+            FROM posts
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (post_id,)
+        )
+
+        if not cursor.fetchone():
+
+            return jsonify({
+                "success": False,
+                "message": "Post not found."
+            }), 404
+
+        cursor.execute(
+            """
+            INSERT INTO comments
+            (
+                post_id,
+                user_id,
+                comment
+            )
+            VALUES
+            (
+                %s,
+                %s,
+                %s
+            )
+            """,
+            (
+                post_id,
+                session["user_id"],
+                comment_text
+            )
+        )
+
+        connection.commit()
+
+        return jsonify({
+            "success": True,
+            "username": session.get(
+                "username",
+                "User"
+            ),
+            "comment": comment_text
+        })
+
+    except Error as e:
+
+        connection.rollback()
+
+        print("COMMENT ERROR:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to add comment."
+        }), 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# PROFILE
+# =========================================================
+
+@app.route(
+    "/profile/<int:user_id>"
+)
+def profile(user_id):
+
+    if "user_id" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    current_user_id = session["user_id"]
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return "Database connection failed."
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        # -------------------------------------------------
+        # PROFILE USER
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                username,
+                email,
+                profile_pic,
+                bio
+            FROM users
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+
+        profile_user = cursor.fetchone()
+
+        if not profile_user:
+
+            return "User not found.", 404
+
+        # -------------------------------------------------
+        # POSTS
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                p.id,
+                p.user_id,
+                p.image,
+                p.caption,
+                p.created_at,
+
+                (
+                    SELECT COUNT(*)
+                    FROM likes l
+                    WHERE l.post_id = p.id
+                ) AS likes,
+
+                EXISTS (
+                    SELECT 1
+                    FROM likes l2
+                    WHERE l2.post_id = p.id
+                    AND l2.user_id = %s
+                ) AS user_liked
+
+            FROM posts p
+
+            WHERE p.user_id = %s
+
+            ORDER BY p.created_at DESC
+            """,
+            (
+                current_user_id,
+                user_id
+            )
+        )
+
+        posts = cursor.fetchall()
+
+        # -------------------------------------------------
+        # POST COUNT
+        # -------------------------------------------------
+        post_count = len(posts)
+
+        # -------------------------------------------------
+        # FOLLOWERS COUNT
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM follows
+            WHERE following_id = %s
+            """,
+            (user_id,)
+        )
+
+        followers_count = cursor.fetchone()[
+            "total"
+        ]
+
+        # -------------------------------------------------
+        # FOLLOWING COUNT
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM follows
+            WHERE follower_id = %s
+            """,
+            (user_id,)
+        )
+
+        following_count = cursor.fetchone()[
+            "total"
+        ]
+
+        # -------------------------------------------------
+        # FOLLOW STATUS
+        # -------------------------------------------------
+
+        is_following = False
+
+        if current_user_id != user_id:
+
+            cursor.execute(
+                """
+                SELECT id
+                FROM follows
+                WHERE follower_id = %s
+                AND following_id = %s
+                LIMIT 1
+                """,
+                (
+                    current_user_id,
+                    user_id
+                )
+            )
+
+            is_following = (
+                cursor.fetchone()
+                is not None
+            )
+
+        is_own_profile = (
+            current_user_id == user_id
+        )
+
+        # IMPORTANT:
+        # Pass every variable used by profile.html.
+        return render_template(
+            "profile.html",
+
+            profile_user=profile_user,
+
+            # Compatibility variables
+            user=profile_user,
+            current_user=profile_user,
+
+            posts=posts,
+
+            post_count=post_count,
+
+            followers_count=followers_count,
+            following_count=following_count,
+
+            is_following=is_following,
+            is_own_profile=is_own_profile,
+
+            current_user_id=current_user_id
+        )
+
+    except Error as e:
+
+        print("PROFILE ERROR:", e)
+
+        return f"Profile error: {e}"
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# FOLLOW / UNFOLLOW
+# =========================================================
+
+@app.route(
+    "/follow/<int:user_id>",
+    methods=["POST"]
+)
+def follow_user(user_id):
+
+    if "user_id" not in session:
+
+        if is_ajax_request():
+
+            return jsonify({
+                "success": False,
+                "message": "Please login first."
+            }), 401
+
+        return redirect(
+            url_for("login")
+        )
+
+    current_user_id = session["user_id"]
+
+    if current_user_id == user_id:
+
+        return jsonify({
+            "success": False,
+            "message": "You cannot follow yourself."
+        }), 400
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return jsonify({
+            "success": False,
+            "message": "Database connection failed."
+        }), 500
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        # Check target user
+        cursor.execute(
+            """
+            SELECT id
+            FROM users
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+
+        if not cursor.fetchone():
+
+            return jsonify({
+                "success": False,
+                "message": "User not found."
+            }), 404
+
+        # Check existing follow
+        cursor.execute(
+            """
+            SELECT id
+            FROM follows
+            WHERE follower_id = %s
+            AND following_id = %s
+            LIMIT 1
+            """,
+            (
+                current_user_id,
+                user_id
+            )
+        )
+
+        existing_follow = cursor.fetchone()
+
+        if existing_follow:
+
+            cursor.execute(
+                """
+                DELETE FROM follows
+                WHERE follower_id = %s
+                AND following_id = %s
+                """,
+                (
+                    current_user_id,
+                    user_id
+                )
+            )
+
+            following = False
+
+        else:
+
+            cursor.execute(
+                """
+                INSERT INTO follows
+                (
+                    follower_id,
+                    following_id
+                )
+                VALUES
+                (
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    current_user_id,
+                    user_id
+                )
+            )
+
+            following = True
+
+        connection.commit()
+
+        return jsonify({
+            "success": True,
+            "following": following
+        })
+
+    except Error as e:
+
+        connection.rollback()
+
+        print("FOLLOW ERROR:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to update follow status."
+        }), 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# FOLLOWERS
+# =========================================================
+
+@app.route("/followers")
+@app.route("/followers/<int:user_id>")
+def followers(user_id=None):
+
+    if "user_id" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    # If /followers is opened,
+    # use logged-in user's ID.
+    if user_id is None:
+
+        user_id = session["user_id"]
+
+    current_user_id = session["user_id"]
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return "Database connection failed."
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        # -------------------------------------------------
+        # PROFILE OWNER
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                username,
+                email,
+                profile_pic,
+                bio
+            FROM users
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+
+        profile_user = cursor.fetchone()
+
+        if not profile_user:
+
+            return "User not found.", 404
+
+        # -------------------------------------------------
+        # FOLLOWERS
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                u.id,
+                u.username,
+                u.email,
+                u.profile_pic,
+                u.bio
+            FROM follows f
+
+            INNER JOIN users u
+                ON f.follower_id = u.id
+
+            WHERE f.following_id = %s
+
+            ORDER BY f.created_at DESC
+            """,
+            (user_id,)
+        )
+
+        users = cursor.fetchall()
+
+        # -------------------------------------------------
+        # IMPORTANT FIX
+        #
+        # We pass:
+        # users
+        # profile_user
+        # user
+        # current_user
+        # current_user_id
+        #
+        # This prevents all of your previous
+        # UndefinedError problems.
+        # -------------------------------------------------
+
+        return render_template(
+            "followers.html",
+
+            users=users,
+
+            profile_user=profile_user,
+
+            user=profile_user,
+
+            current_user=profile_user,
+
+            title="Followers",
+
+            current_user_id=current_user_id
+        )
+
+    except Error as e:
+
+        print("FOLLOWERS ERROR:", e)
+
+        return f"Followers error: {e}"
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# FOLLOWING
+# =========================================================
+
+@app.route("/following")
+@app.route("/following/<int:user_id>")
+def following(user_id=None):
+
+    if "user_id" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    # If /following is opened,
+    # use logged-in user's ID.
+    if user_id is None:
+
+        user_id = session["user_id"]
+
+    current_user_id = session["user_id"]
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return "Database connection failed."
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        # -------------------------------------------------
+        # PROFILE OWNER
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                username,
+                email,
+                profile_pic,
+                bio
+            FROM users
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+
+        profile_user = cursor.fetchone()
+
+        if not profile_user:
+
+            return "User not found.", 404
+
+        # -------------------------------------------------
+        # FOLLOWING USERS
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                u.id,
+                u.username,
+                u.email,
+                u.profile_pic,
+                u.bio
+            FROM follows f
+
+            INNER JOIN users u
+                ON f.following_id = u.id
+
+            WHERE f.follower_id = %s
+
+            ORDER BY f.created_at DESC
+            """,
+            (user_id,)
+        )
+
+        users = cursor.fetchall()
+
+        # -------------------------------------------------
+        # IMPORTANT FIX
+        #
+        # Use following.html if it exists.
+        # All expected variables are supplied.
+        # -------------------------------------------------
+
+        return render_template(
+            "following.html",
+
+            users=users,
+
+            profile_user=profile_user,
+
+            user=profile_user,
+
+            current_user=profile_user,
+
+            title="Following",
+
+            current_user_id=current_user_id
+        )
+
+    except Error as e:
+
+        print("FOLLOWING ERROR:", e)
+
+        return f"Following error: {e}"
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# SEARCH
+# =========================================================
+
+@app.route("/search")
+def search():
+
+    if "user_id" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    search_value = request.args.get(
+        "q",
+        ""
+    ).strip()
+
+    connection = get_db_connection()
+
+    if connection is None:
+
+        return "Database connection failed."
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                username,
+                email,
+                profile_pic,
+                bio
+            FROM users
+            WHERE LOWER(username)
+                LIKE LOWER(%s)
+            ORDER BY username
+            """,
+            (
+                "%" + search_value + "%"
+            )
+        )
+
+        users = cursor.fetchall()
+
+        return render_template(
+            "search.html",
+
+            users=users,
+
+            search_value=search_value,
+
+            current_user_id=session[
+                "user_id"
+            ]
+        )
+
+    except Error as e:
+
+        print("SEARCH ERROR:", e)
+
+        return f"Search error: {e}"
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# LOGOUT
+# =========================================================
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect(
+        url_for("login")
+    )
+
+
+# =========================================================
+# ERROR HANDLER
+# =========================================================
+
+@app.errorhandler(413)
+def file_too_large(error):
+
+    return (
+        "Image/file is too large. "
+        "Maximum size is 16 MB.",
+        413
+    )
+
+
+# =========================================================
+# RUN
+# =========================================================
+
+if __name__ == "__main__":
+
+    initialize_database()
+
+    print("----------------------------------------")
+    print("CONNECT SOCIAL MEDIA")
+    print("----------------------------------------")
+    print("MySQL host : localhost")
+    print("MySQL port : 3307")
+    print("Database   :", DB_NAME)
+    print("Flask URL  : http://127.0.0.1:5000")
+    print("----------------------------------------")
+
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=True
+    )

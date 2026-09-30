@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} • Connect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
+            min-height: 100vh;
+        }
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
+            border-bottom: 1px solid #dbdbdb;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+        .nav-content {
+            width: 100%;
+            max-width: 975px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-family: 'Grand Hotel', cursive;
+            font-size: 30px;
+            color: #262626;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+        .nav-icons { display: flex; align-items: center; gap: 22px; }
+        .nav-icon-link { color: #262626; text-decoration: none; display: flex; align-items: center; }
+        .nav-icon-link svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+        .container {
+            max-width: 480px;
+            margin: 35px auto 60px auto;
+            padding: 0 16px;
+        }
+        .list-card {
+            background: #ffffff;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+        }
+        .list-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #efefef;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .list-title { font-size: 16px; font-weight: 700; color: #262626; }
+        .back-link { font-size: 13px; color: #0095f6; text-decoration: none; font-weight: 600; }
+
+        .user-list { padding: 10px 0; }
+        .user-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.15s;
+        }
+        .user-row:hover { background: #fafafa; }
+        .user-left { display: flex; align-items: center; gap: 12px; }
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f09433, #dc2743);
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .username { font-size: 14px; font-weight: 600; color: #262626; }
+        .bio { font-size: 12px; color: #8e8e8e; margin-top: 2px; }
+        .profile-btn {
+            background: #efefef;
+            color: #262626;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .empty-box {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8e8e8e;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="{{ url_for('home') }}" class="logo">Connect</a>
+        <div class="nav-icons">
+            <a href="{{ url_for('home') }}" class="nav-icon-link" title="Home">
+                <svg viewBox="0 0 24 24"><path d="M9.005 16.545a2.997 2.997 0 0 1 2.997-2.997A2.997 2.997 0 0 1 15 16.545V22h7V11.543L12 2 2 11.543V22h7.005z"></path></svg>
+            </a>
+            <a href="{{ url_for('profile', user_id=current_user_id) }}" class="nav-icon-link" title="Profile">
+                <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="list-card">
+        <div class="list-header">
+            <span class="list-title">{{ title }}</span>
+            <a href="{{ url_for('profile', user_id=profile_user.id) }}" class="back-link">Back to Profile</a>
+        </div>
+
+        <div class="user-list">
+            {% if users %}
+                {% for u in users %}
+                <a href="{{ url_for('profile', user_id=u.id) }}" class="user-row">
+                    <div class="user-left">
+                        <div class="avatar">{{ u.username[0]|upper }}</div>
+                        <div>
+                            <div class="username">{{ u.username }}</div>
+                            <div class="bio">{{ u.bio or u.email }}</div>
+                        </div>
+                    </div>
+                    <button type="button" class="profile-btn">Profile</button>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-box">
+                    No users to show yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
